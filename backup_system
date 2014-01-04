@@ -1,0 +1,86 @@
+#!/bin/bash
+
+read -r -d '' USAGE <<'USAGEEND'
+backup_system - backup the current system to the attached DR disk
+
+Options:
+    -h      This help text.
+    -n      Dry run.  Just show what would be done.
+    -w      Show what would be copied to the backup disk.
+USAGEEND
+
+DRY_RUN=
+while getopts hnw flag; do
+    case $flag in
+        h|\?)
+            echo "$USAGE"; exit;;
+        n)
+            DRY_RUN=1;;
+        w)
+            WHAT_WOULD_SYNC=1;;
+    esac
+done
+
+if [[ -d /Volumes/CALVIN ]]; then
+    DESTINATION_BASE=/Volumes/CALVIN
+elif [[ -d /Volumes/HOBBES ]]; then
+    DESTINATION_BASE=/Volumes/HOBBES
+else
+    echo "No destination disk available."
+    exit 1
+fi
+
+HOSTNAME=$(hostname)
+
+if [[ $HOSTNAME =~ icarus ]]; then
+    SYSTEM=icarus
+elif [[ $HOSTNAME =~ mini ]]; then
+    SYSTEM=mini
+else
+    echo "Unknown system with hostname: $HOSTNAME"
+    exit 1
+fi
+
+LOG_PATH="$DESTINATION_BASE/systems/logs"
+if [[ ! -d $LOG_PATH ]]; then
+    mkdir -p $LOG_PATH
+fi
+
+DESTINATION="$DESTINATION_BASE/systems/$SYSTEM"
+if [[ ! -d $DESTINATION ]]; then
+    mkdir -p $DESTINATION
+fi
+
+RSYNC="rsync --delete -hvar"
+
+# these are the same on all systems for now,
+# move up to conditional if that changes
+EXCLUDES="--exclude .Trash --exclude Library"
+SOURCE="/Users/jones"  # no trailing slash
+
+RSYNC_CMD="$RSYNC $SOURCE $EXCLUDES $DESTINATION"
+
+if [[ -n $DRY_RUN ]]; then
+
+    echo $RSYNC_CMD
+elif [[ -n $WHAT_WOULD_SYNC ]]; then
+
+    OUTPUT=$(mktemp -t rsync)
+    echo "Generating list of files that would sync..."
+
+    $RSYNC_CMD -n > $OUTPUT
+
+    less $OUTPUT
+    rm $OUTPUT
+else
+
+    DATE=$(date +%FT%T)
+    LOG_FILE=$LOG_PATH/$SYSTEM.$DATE.log
+
+    echo "Backing up $SYSTEM to $DESTINATION"
+    echo "Log file: $LOG_FILE"
+
+    $RSYNC_CMD > $LOG_PATH/$SYSTEM.$DATE.log
+
+    touch $LOG_PATH/$SYSTEM.latest
+fi
