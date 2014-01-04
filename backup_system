@@ -55,7 +55,7 @@ RSYNC="rsync --delete -hvar"
 
 # these are the same on all systems for now,
 # move up to conditional if that changes
-EXCLUDES="--exclude .Trash --exclude Library"
+EXCLUDES="--exclude .Trash --exclude Library --exclude personal_backup"
 SOURCE="/Users/jones"  # no trailing slash
 
 RSYNC_CMD="$RSYNC $SOURCE $EXCLUDES $DESTINATION"
