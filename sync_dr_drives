@@ -1,0 +1,78 @@
+#!/bin/bash
+
+read -r -d '' USAGE <<'USAGEEND'
+sync_dr_drives - sync the DR backup between the two DR disks
+
+Options:
+    -h      This help text.
+    -n      Dry run.  Just show what would be done.
+    -w      Show what would be copied to the other disk.
+USAGEEND
+
+DRY_RUN=
+while getopts hnw flag; do
+    case $flag in
+        h|\?)
+            echo "$USAGE"; exit;;
+        n)
+            DRY_RUN=1;;
+        w)
+            WHAT_WOULD_SYNC=1;;
+    esac
+done
+
+if [[ ! -d /Volumes/CALVIN || ! -d /Volumes/HOBBES ]]; then
+    echo "Both DR drives must be connected to sync."
+    exit 1
+fi
+
+RSYNC="rsync --delete -hvar"
+
+for SYSTEM in icarus mini; do
+    CALVIN_LOG=/Volumes/CALVIN/systems/logs/${SYSTEM}.latest
+    HOBBES_LOG=/Volumes/HOBBES/systems/logs/${SYSTEM}.latest
+
+    if [[ ! -e $HOBBES_LOG && -e $CALVIN_LOG ]] || [[ $CALVIN_LOG -nt $HOBBES_LOG ]]; then
+        SOURCE=/Volumes/CALVIN
+        DESTINATION=/Volumes/HOBBES
+    elif [[ ! -e $CALVIN_LOG && -e $HOBBES_LOG ]] || [[ $HOBBES_LOG -nt $CALVIN_LOG ]]; then
+        SOURCE=/Volumes/HOBBES
+        DESTINATION=/Volumes/CALVIN
+    else
+        echo "No log files found for system $SYSTEM, unable to determine sync direction"
+        exit 1
+    fi
+    echo "System '$SYSTEM' sync from $SOURCE -> $DESTINATION"
+
+    RSYNC_CMD="$RSYNC $SOURCE/systems/$SYSTEM $DESTINATION/systems/"
+
+    if [[ -n $DRY_RUN ]]; then
+
+        echo $RSYNC_CMD
+    elif [[ -n $WHAT_WOULD_SYNC ]]; then
+
+        OUTPUT=$(mktemp -t rsync)
+        echo "Generating list of files that would sync..."
+
+        $RSYNC_CMD -n > $OUTPUT
+
+        less $OUTPUT
+        rm $OUTPUT
+    else
+
+        LOG_PATH=$DESTINATION/systems/logs
+        if [[ ! -d $LOG_PATH ]]; then
+            mkdir -p $LOG_PATH
+        fi
+
+        DATE=$(date +%FT%T)
+        LOG_FILE=$LOG_PATH/${SYSTEM}-sync.$DATE.log
+
+        echo "Log file: $LOG_FILE"
+
+        echo "$RSYNC_CMD > $LOG_FILE"
+    fi
+done
+
+exit
+
