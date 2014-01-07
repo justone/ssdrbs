@@ -80,7 +80,7 @@ else
     echo "Backing up $SYSTEM to $DESTINATION"
     echo "Log file: $LOG_FILE"
 
-    $RSYNC_CMD > $LOG_PATH/$SYSTEM.$DATE.log
+    $RSYNC_CMD > $LOG_FILE
 
     touch $LOG_PATH/$SYSTEM.latest
 fi
