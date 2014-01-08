@@ -70,7 +70,7 @@ for SYSTEM in icarus mini; do
 
         echo "Log file: $LOG_FILE"
 
-        echo "$RSYNC_CMD > $LOG_FILE"
+        $RSYNC_CMD > $LOG_FILE
     fi
 done
 
