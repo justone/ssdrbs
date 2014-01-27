@@ -30,7 +30,6 @@ else
     exit 1
 fi
 
-echo $SYSTEM
 if [[ -z $SYSTEM ]]; then
 
     HOSTNAME=$(hostname)
@@ -44,7 +43,6 @@ if [[ -z $SYSTEM ]]; then
         exit 1
     fi
 fi
-echo $SYSTEM
 
 LOG_PATH="$DESTINATION_BASE/systems/logs"
 if [[ ! -d $LOG_PATH ]]; then
