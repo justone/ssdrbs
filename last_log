@@ -1,0 +1,60 @@
+#!/bin/bash
+
+read -r -d '' USAGE <<'USAGEEND'
+last_log - view or tail the last log for the current system
+
+Options:
+    -h      This help text.
+    -f      Instead of using less, run tail -f on the file.
+    -s      View last log for the specified system.  Autodetected if missing.
+USAGEEND
+
+TAIL=
+while getopts hfs: flag; do
+    case $flag in
+        h|\?)
+            echo "$USAGE"; exit;;
+        f)
+            TAIL=1;;
+        s)
+            SYSTEM=$OPTARG;;
+    esac
+done
+
+if [[ -d /Volumes/CALVIN ]]; then
+    DESTINATION_BASE=/Volumes/CALVIN
+elif [[ -d /Volumes/HOBBES ]]; then
+    DESTINATION_BASE=/Volumes/HOBBES
+else
+    echo "No destination disk available."
+    exit 1
+fi
+
+echo $SYSTEM
+if [[ -z $SYSTEM ]]; then
+
+    HOSTNAME=$(hostname)
+
+    if [[ $HOSTNAME =~ icarus ]]; then
+        SYSTEM=icarus
+    elif [[ $HOSTNAME =~ mini ]]; then
+        SYSTEM=mini
+    else
+        echo "Unknown system with hostname: $HOSTNAME"
+        exit 1
+    fi
+fi
+echo $SYSTEM
+
+LOG_PATH="$DESTINATION_BASE/systems/logs"
+if [[ ! -d $LOG_PATH ]]; then
+    mkdir -p $LOG_PATH
+fi
+
+LAST_LOG=$(ls -tr $LOG_PATH/$SYSTEM*log | tail -n 1)
+
+if [[ -n $TAIL ]]; then
+    tail -f $LAST_LOG
+else
+    less $LAST_LOG
+fi
