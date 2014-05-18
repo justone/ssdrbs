@@ -4,13 +4,15 @@ read -r -d '' USAGE <<'USAGEEND'
 backup_system - backup the current system to the attached DR disk
 
 Options:
-    -h      This help text.
-    -n      Dry run.  Just show what would be done.
-    -w      Show what would be copied to the backup disk.
+    -h          This help text.
+    -n          Dry run.  Just show what would be done.
+    -w          Show what would be copied to the backup disk.
+    -r <system> Back up the specified remote system.
 USAGEEND
 
+REMOTE=
 DRY_RUN=
-while getopts hnw flag; do
+while getopts hnwr: flag; do
     case $flag in
         h|\?)
             echo "$USAGE"; exit;;
@@ -18,6 +20,8 @@ while getopts hnw flag; do
             DRY_RUN=1;;
         w)
             WHAT_WOULD_SYNC=1;;
+        r)
+            REMOTE=$OPTARG;;
     esac
 done
 
@@ -30,15 +34,38 @@ else
     exit 1
 fi
 
-HOSTNAME=$(hostname)
+if [[ -n $REMOTE ]]; then
+    # set up remote rsync
+    SYSTEM=$REMOTE
 
-if [[ $HOSTNAME =~ icarus ]]; then
-    SYSTEM=icarus
-elif [[ $HOSTNAME =~ mini ]]; then
-    SYSTEM=mini
+    PRIVKEY=$DESTINATION_BASE/keys/remote
+
+    if [[ ! -e $PRIVKEY ]]; then
+        echo "No private key $PRIVKEY found to backup remote system."
+        exit 1
+    fi
+
+    RSYNC_SRC_CMD="rsync --verbose --delete --archive --compress --one-file-system -e 'ssh -i $PRIVKEY' --rsync-path='/usr/bin/sudo /usr/bin/rsync' --numeric-ids rsync@$REMOTE:/"
 else
-    echo "Unknown system with hostname: $HOSTNAME"
-    exit 1
+    HOSTNAME=$(hostname)
+
+    if [[ $HOSTNAME =~ icarus ]]; then
+        SYSTEM=icarus
+    elif [[ $HOSTNAME =~ mini ]]; then
+        SYSTEM=mini
+    else
+        echo "Unknown system with hostname: $HOSTNAME"
+        exit 1
+    fi
+
+    RSYNC="rsync --delete -hvar"
+
+    # these are the same on all systems for now,
+    # move up to conditional if that changes
+    EXCLUDES="--exclude .Trash --exclude Library --exclude personal_backup"
+    SOURCE="/Users/jones"  # no trailing slash
+
+    RSYNC_SRC_CMD="$RSYNC $EXCLUDES $SOURCE"
 fi
 
 LOG_PATH="$DESTINATION_BASE/systems/logs"
@@ -51,14 +78,7 @@ if [[ ! -d $DESTINATION ]]; then
     mkdir -p $DESTINATION
 fi
 
-RSYNC="rsync --delete -hvar"
-
-# these are the same on all systems for now,
-# move up to conditional if that changes
-EXCLUDES="--exclude .Trash --exclude Library --exclude personal_backup"
-SOURCE="/Users/jones"  # no trailing slash
-
-RSYNC_CMD="$RSYNC $SOURCE $EXCLUDES $DESTINATION"
+RSYNC_CMD="$RSYNC_SRC_CMD $DESTINATION"
 
 if [[ -n $DRY_RUN ]]; then
 
@@ -68,7 +88,7 @@ elif [[ -n $WHAT_WOULD_SYNC ]]; then
     OUTPUT=$(mktemp -t rsync)
     echo "Generating list of files that would sync..."
 
-    $RSYNC_CMD -n > $OUTPUT
+    eval "$RSYNC_CMD -n" > $OUTPUT
 
     less $OUTPUT
     rm $OUTPUT
@@ -80,7 +100,7 @@ else
     echo "Backing up $SYSTEM to $DESTINATION"
     echo "Log file: $LOG_FILE"
 
-    $RSYNC_CMD > $LOG_FILE
+    eval $RSYNC_CMD > $LOG_FILE
 
     touch $LOG_PATH/$SYSTEM.latest
 fi
