@@ -51,8 +51,10 @@ else
 
     if [[ $HOSTNAME =~ icarus ]]; then
         SYSTEM=icarus
+        EXCLUDES="--exclude .Trash --exclude Library --exclude personal_backup"
     elif [[ $HOSTNAME =~ mini ]]; then
         SYSTEM=mini
+        EXCLUDES="--exclude .Trash --exclude old_home/Library --exclude Library --exclude personal_backup --exclude old_home/personal_backup"
     else
         echo "Unknown system with hostname: $HOSTNAME"
         exit 1
@@ -62,7 +64,6 @@ else
 
     # these are the same on all systems for now,
     # move up to conditional if that changes
-    EXCLUDES="--exclude .Trash --exclude Library --exclude personal_backup"
     SOURCE="/Users/jones"  # no trailing slash
 
     RSYNC_SRC_CMD="$RSYNC $EXCLUDES $SOURCE"
