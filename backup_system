@@ -38,14 +38,7 @@ if [[ -n $REMOTE ]]; then
     # set up remote rsync
     SYSTEM=$REMOTE
 
-    PRIVKEY=$DESTINATION_BASE/keys/remote
-
-    if [[ ! -e $PRIVKEY ]]; then
-        echo "No private key $PRIVKEY found to backup remote system."
-        exit 1
-    fi
-
-    RSYNC_SRC_CMD="rsync --verbose --delete --archive --compress --one-file-system -e 'ssh -i $PRIVKEY' --rsync-path='/usr/bin/sudo /usr/bin/rsync' --numeric-ids rsync@$REMOTE:/"
+    RSYNC_SRC_CMD="rsync --verbose --delete --archive --compress --one-file-system -e ssh --numeric-ids $REMOTE:/home/nate/"
 else
     HOSTNAME=$(hostname)
 
