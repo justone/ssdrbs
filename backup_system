@@ -47,7 +47,7 @@ else
         EXCLUDES="--exclude .Trash --exclude Library --exclude personal_backup"
     elif [[ $HOSTNAME =~ mini ]]; then
         SYSTEM=mini
-        EXCLUDES="--exclude .Trash --exclude old_home/Library --exclude Library --exclude personal_backup --exclude old_home/personal_backup"
+        EXCLUDES="--exclude .Trash --exclude old_home/Library --exclude Library --exclude personal_backup --exclude annex --exclude old_home/personal_backup"
     else
         echo "Unknown system with hostname: $HOSTNAME"
         exit 1
