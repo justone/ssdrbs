@@ -23,8 +23,8 @@ done
 
 if [[ -d /Volumes/CALVIN ]]; then
     DESTINATION_BASE=/Volumes/CALVIN
-elif [[ -d /Volumes/HOBBES ]]; then
-    DESTINATION_BASE=/Volumes/HOBBES
+elif [[ -d /Volumes/HOBBES2 ]]; then
+    DESTINATION_BASE=/Volumes/HOBBES2
 else
     echo "No destination disk available."
     exit 1

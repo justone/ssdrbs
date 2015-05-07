@@ -21,7 +21,7 @@ while getopts hnw flag; do
     esac
 done
 
-if [[ ! -d /Volumes/CALVIN || ! -d /Volumes/HOBBES ]]; then
+if [[ ! -d /Volumes/CALVIN || ! -d /Volumes/HOBBES2 ]]; then
     echo "Both DR drives must be connected to sync."
     exit 1
 fi
@@ -30,13 +30,13 @@ RSYNC="rsync --delete -hvar"
 
 for SYSTEM in icarus mini; do
     CALVIN_LOG=/Volumes/CALVIN/systems/logs/${SYSTEM}.latest
-    HOBBES_LOG=/Volumes/HOBBES/systems/logs/${SYSTEM}.latest
+    HOBBES2_LOG=/Volumes/HOBBES2/systems/logs/${SYSTEM}.latest
 
-    if [[ ! -e $HOBBES_LOG && -e $CALVIN_LOG ]] || [[ $CALVIN_LOG -nt $HOBBES_LOG ]]; then
+    if [[ ! -e $HOBBES2_LOG && -e $CALVIN_LOG ]] || [[ $CALVIN_LOG -nt $HOBBES2_LOG ]]; then
         SOURCE=/Volumes/CALVIN
-        DESTINATION=/Volumes/HOBBES
-    elif [[ ! -e $CALVIN_LOG && -e $HOBBES_LOG ]] || [[ $HOBBES_LOG -nt $CALVIN_LOG ]]; then
-        SOURCE=/Volumes/HOBBES
+        DESTINATION=/Volumes/HOBBES2
+    elif [[ ! -e $CALVIN_LOG && -e $HOBBES2_LOG ]] || [[ $HOBBES2_LOG -nt $CALVIN_LOG ]]; then
+        SOURCE=/Volumes/HOBBES2
         DESTINATION=/Volumes/CALVIN
     else
         echo "No log files found for system $SYSTEM, unable to determine sync direction"
