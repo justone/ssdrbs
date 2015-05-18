@@ -28,7 +28,7 @@ fi
 
 RSYNC="rsync --delete -hvar"
 
-for SYSTEM in icarus mini; do
+for SYSTEM in icarus mini silo digit; do
     CALVIN_LOG=/Volumes/CALVIN/systems/logs/${SYSTEM}.latest
     HOBBES2_LOG=/Volumes/HOBBES2/systems/logs/${SYSTEM}.latest
 
